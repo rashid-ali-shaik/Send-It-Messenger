@@ -1,7 +1,7 @@
 const createHttpError = require("http-errors");
 
 const notFound = (req, res, next) => {
-  const err = createHttpError("404", "route doesn't exits");
+  const err = createHttpError.NotFound("router doesn't exits");
   next(err);
 };
 
