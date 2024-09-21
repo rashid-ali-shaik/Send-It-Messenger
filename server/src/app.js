@@ -3,6 +3,7 @@ require("express-async-errors");
 const userRoutes = require("./routes/userRoutes");
 const notFound = require("./middlewares/notFound");
 const errorHandler = require("./middlewares/errorHandler");
+require("colors");
 
 const app = express();
 
