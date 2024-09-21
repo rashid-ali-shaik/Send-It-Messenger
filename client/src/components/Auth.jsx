@@ -1,16 +1,20 @@
 import { useState } from "react";
 import { FaEye, FaEyeSlash, FaUser, FaEnvelope, FaLock } from "react-icons/fa";
+import axiosInstance from "../customHooks/axiosInstance";
+import { useNavigate } from "react-router-dom";
+import { toast } from "react-toastify";
 
 const AuthPages = () => {
+  const navigate = useNavigate();
   const [isLogin, setIsLogin] = useState(true);
   const [showPassword, setShowPassword] = useState(false);
   const [formData, setFormData] = useState({
     name: "",
     email: "",
     password: "",
-    confirmPassword: "",
-    profileImage: null,
+    // confirmPassword: "",
   });
+  const [image, setImage] = useState("");
   const [errors, setErrors] = useState({});
 
   const handleInputChange = (e) => {
@@ -33,10 +37,10 @@ const AuthPages = () => {
             ? ""
             : "Password must be at least 6 characters long";
         break;
-      case "confirmPassword":
-        newErrors.confirmPassword =
-          value === formData.password ? "" : "Passwords do not match";
-        break;
+      // case "confirmPassword":
+      //   newErrors.confirmPassword =
+      //     value === formData.password ? "" : "Passwords do not match";
+      //   break;
       default:
         break;
     }
@@ -46,14 +50,45 @@ const AuthPages = () => {
   const handleImageUpload = (e) => {
     const file = e.target.files[0];
     if (file) {
-      setFormData({ ...formData, profileImage: URL.createObjectURL(file) });
+      setImage(file);
+      console.log(file);
     }
   };
 
-  const handleSubmit = (e) => {
+  const guestCred = () => {
+    setFormData({ ...formData, email: "guest@mail.com", password: "123456" });
+  };
+
+  const handleSubmit = async (e) => {
     e.preventDefault();
+    const formData = new FormData(e.currentTarget);
+    const formObject = Object.fromEntries(formData);
+    console.log(formObject);
+
     // Handle form submission logic here
     console.log("Form submitted:", formData);
+
+    const dataToSend = { ...formData };
+    if (image) {
+      dataToSend.image = image;
+    }
+
+    const url = isLogin ? "/user/login" : "/user/register";
+
+    try {
+      const { data } = await axiosInstance.post(url, dataToSend, {
+        headers: {
+          Accept: "application/json",
+        },
+      });
+      console.log(data);
+      toast.success("successfully logged in");
+      localStorage.setItem("token", data?.token);
+      navigate("/chats");
+    } catch (error) {
+      console.log(error);
+      toast.error(error?.response?.data?.message);
+    }
   };
 
   const toggleAuthMode = () => {
@@ -62,8 +97,7 @@ const AuthPages = () => {
       name: "",
       email: "",
       password: "",
-      confirmPassword: "",
-      profileImage: null,
+      // confirmPassword: "",
     });
     setErrors({});
   };
@@ -96,6 +130,8 @@ const AuthPages = () => {
                   value={formData.name}
                   onChange={handleInputChange}
                   required
+                  minLength={3}
+                  maxLength={50}
                 />
               </div>
             </div>
@@ -174,41 +210,7 @@ const AuthPages = () => {
             <>
               <div>
                 <label
-                  htmlFor="confirmPassword"
-                  className="block text-sm font-medium text-gray-700"
-                >
-                  Confirm Password
-                </label>
-                <div className="mt-1 relative rounded-md shadow-sm">
-                  <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                    <FaLock className="text-gray-400" />
-                  </div>
-                  <input
-                    type="password"
-                    name="confirmPassword"
-                    id="confirmPassword"
-                    className="focus:ring-indigo-500 p-3 focus:border-indigo-500 block w-full pl-10 sm:text-sm border-gray-300 rounded-md"
-                    placeholder="********"
-                    value={formData.confirmPassword}
-                    onChange={handleInputChange}
-                    required
-                    minLength={6}
-                    aria-invalid={errors.confirmPassword ? "true" : "false"}
-                    aria-describedby="confirm-password-error"
-                  />
-                </div>
-                {errors.confirmPassword && (
-                  <p
-                    className="mt-2 text-sm text-red-600"
-                    id="confirm-password-error"
-                  >
-                    {errors.confirmPassword}
-                  </p>
-                )}
-              </div>
-              <div>
-                <label
-                  htmlFor="profileImage"
+                  htmlFor="image"
                   className="block text-sm font-medium text-gray-700"
                 >
                   Profile Image
@@ -216,8 +218,8 @@ const AuthPages = () => {
                 <div className="mt-1 flex items-center space-x-4">
                   <input
                     type="file"
-                    name="profileImage"
-                    id="profileImage"
+                    name="image"
+                    id="image"
                     accept="image/*"
                     onChange={handleImageUpload}
                     className="sr-only"
@@ -228,9 +230,9 @@ const AuthPages = () => {
                   >
                     Upload Image
                   </label>
-                  {formData.profileImage && (
+                  {image && (
                     <img
-                      src={formData.profileImage}
+                      src={image}
                       alt="Profile Preview"
                       className="h-16 w-16 rounded-full object-cover"
                     />
@@ -247,6 +249,17 @@ const AuthPages = () => {
               {isLogin ? "Login" : "Register"}
             </button>
           </div>
+          {isLogin && (
+            <div>
+              <button
+                type="button"
+                onClick={guestCred}
+                className="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-red-600 hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500"
+              >
+                Guest Login
+              </button>
+            </div>
+          )}
         </form>
         <div className="mt-4 text-center">
           {isLogin ? (

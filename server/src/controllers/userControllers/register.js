@@ -4,6 +4,8 @@ const { StatusCodes } = require("http-status-codes");
 const register = async (req, res, next) => {
   const { name, email, password } = req.body;
 
+  console.log(req.body);
+  return;
   // throwing an error if any value misses
   if (!name) return next(createHttpError.BadRequest("please provide name"));
   if (!email) return next(createHttpError.BadRequest("please provide email"));
